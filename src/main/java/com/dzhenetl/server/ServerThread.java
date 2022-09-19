@@ -9,6 +9,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.nio.charset.StandardCharsets;
+
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 
 public class ServerThread implements Runnable {
     private final Socket socket;
@@ -39,10 +43,12 @@ public class ServerThread implements Runnable {
             }
 
             String path = parts[1];
-            if (!validPaths.contains(path)) {
+            if (!validPaths.contains(getQueryPath(path))) {
                 sendError(out);
                 return;
             }
+            
+            List<NameValuePair> params = getQueryParams(path);
 
             Path filePath = Path.of(".", "public", path);
             String mimeType = Files.probeContentType(filePath);
@@ -56,6 +62,14 @@ public class ServerThread implements Runnable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+    
+    private List<NameValuePair> getQueryParams(String request) {
+        return URLEncodedUtils.parse(request.split("\\?")[1], StandardCharsets.UTF_8);
+    }
+
+    private String getQueryPath(String request) {
+        return request.split("\\?")[0];
     }
 
     private String[] readRequest() throws IOException {
