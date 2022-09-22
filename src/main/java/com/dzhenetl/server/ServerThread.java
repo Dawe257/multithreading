@@ -42,18 +42,17 @@ public class ServerThread implements Runnable {
                 return;
             }
 
-            String path = parts[1];
-            if (!validPaths.contains(getQueryPath(path))) {
+            Request request = new Request(parts[1]);
+
+            if (!validPaths.contains(request.getPath())) {
                 sendError(out);
                 return;
             }
-            
-            List<NameValuePair> params = getQueryParams(path);
 
-            Path filePath = Path.of(".", "public", path);
+            Path filePath = Path.of(".", "public", request.getPath());
             String mimeType = Files.probeContentType(filePath);
 
-            if (path.equals("/classic.html")) {
+            if (request.getPath().equals("/classic.html")) {
                 sendTimeTemplate(filePath, mimeType);
                 return;
             }
@@ -62,14 +61,6 @@ public class ServerThread implements Runnable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-    
-    private List<NameValuePair> getQueryParams(String request) {
-        return URLEncodedUtils.parse(request.split("\\?")[1], StandardCharsets.UTF_8);
-    }
-
-    private String getQueryPath(String request) {
-        return request.split("\\?")[0];
     }
 
     private String[] readRequest() throws IOException {
